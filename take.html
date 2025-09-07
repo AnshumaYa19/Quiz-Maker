@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Take Quiz</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h2>Available Quizzes</h2>
+  <ul id="quizList"></ul>
+
+  <div id="quizContainer" style="display:none">
+    <h3 id="quizTitle"></h3>
+    <p id="questionText"></p>
+    <div id="options"></div>
+    <button onclick="submitAnswer()">Submit</button>
+    <p id="result"></p>
+  </div>
+
+  <script>
+    let quizzes = [], currentQuiz, currentQuestion = 0, score = 0;
+
+    fetch('/api/quizzes')
+      .then(res => res.json())
+      .then(data => {
+        quizzes = data;
+        const list = document.getElementById('quizList');
+        quizzes.forEach((q, i) => {
+          const li = document.createElement('li');
+          li.textContent = q.title;
+          li.onclick = () => startQuiz(i);
+          list.appendChild(li);
+        });
+      });
+
+    function startQuiz(index) {
+      currentQuiz = quizzes[index];
+      currentQuestion = 0;
+      score = 0;
+      document.getElementById('quizList').style.display = 'none';
+      document.getElementById('quizContainer').style.display = 'block';
+      showQuestion();
+    }
+
+    function showQuestion() {
+      const q = currentQuiz.questions[currentQuestion];
+      document.getElementById('quizTitle').textContent = currentQuiz.title;
+      document.getElementById('questionText').textContent = q.question;
+      const optDiv = document.getElementById('options');
+      optDiv.innerHTML = '';
+      q.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.textContent = opt;
+        btn.onclick = () => {
+          if (opt === q.correctAnswer) score++;
+          currentQuestion++;
+          if (currentQuestion < currentQuiz.questions.length) {
+            showQuestion();
+          } else {
+            document.getElementById('result').textContent = `Score: ${score}/${currentQuiz.questions.length}`;
+          }
+        }
+        optDiv.appendChild(btn);
+      });
+    }
+  </script>
+</body>
+</html>
